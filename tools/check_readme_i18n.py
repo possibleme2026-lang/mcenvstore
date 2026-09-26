@@ -120,11 +120,18 @@ def check_tables(en: str, zh: str) -> None:
 
 
 # ------------------------------------------------------------------- 4. links
+# Markdown inline links: [text](target)
 LINK = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
+# Autolinks: <https://example.com>  -- easy to forget, and a URL that exists in
+# only one language is a real drift bug, so they must be collected too.
+AUTOLINK = re.compile(r"<((?:https?|mailto):[^>\s]+)>")
 
 
 def links(text: str) -> set[str]:
-    return {m.group(1).strip() for m in LINK.finditer(strip_code_fences(text))}
+    body = strip_code_fences(text)
+    out = {m.group(1).strip() for m in LINK.finditer(body)}
+    out |= {m.group(1).strip() for m in AUTOLINK.finditer(body)}
+    return out
 
 
 def slugify(title: str) -> str:

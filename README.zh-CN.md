@@ -6,6 +6,8 @@
 [![Single file](https://img.shields.io/badge/build-none%20(plain%20HTML)-brightgreen.svg)](index.html)
 [![Bilingual](https://img.shields.io/badge/i18n-EN%20%7C%20ZH-6ee7d1.svg)](#国际化)
 
+**线上页面：** <https://possibleme2026-lang.github.io/mcenvstore/>
+
 > 模型的上限，由训练环境决定。
 > MCEnvstore 是一个平台落地页：每个知道「什么任务值得训练」的人都能贡献任务，
 > 平台负责把它变成可训练、可验证、防作弊、可打分的环境。

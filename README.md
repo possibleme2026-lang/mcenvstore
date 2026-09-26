@@ -6,6 +6,8 @@ English | [简体中文](README.zh-CN.md)
 [![Single file](https://img.shields.io/badge/build-none%20(plain%20HTML)-brightgreen.svg)](index.html)
 [![Bilingual](https://img.shields.io/badge/i18n-EN%20%7C%20ZH-6ee7d1.svg)](#internationalization)
 
+**Live page:** <https://possibleme2026-lang.github.io/mcenvstore/>
+
 > A model's ceiling is set by its training environments.
 > MCEnvstore is a landing page for a platform where anyone who knows *what tasks are worth training*
 > can contribute them — and the platform turns them into trainable, verifiable, anti-cheating,
