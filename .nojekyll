@@ -1,0 +1,4 @@
+# Bypass Jekyll processing so that files/dirs starting with an underscore are
+# served verbatim. Not strictly required for this repo (no underscore-prefixed
+# paths), but it removes an entire class of "404 on Pages but fine locally" bugs
+# and makes the deploy deterministic.

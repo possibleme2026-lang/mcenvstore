@@ -1,0 +1,12 @@
+{
+  "name": "mcenvstore-landing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MCEnvstore landing page - buildless, dependency-free, bilingual (EN/ZH) single-file site.",
+  "type": "module",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "check": "python tools/check_readme_i18n.py"
+  },
+  "license": "Apache-2.0"
+}

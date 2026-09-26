@@ -1,0 +1,2620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="creative-medium" content="interactive-prototype">
+  <title>MCEnvstore — Agent Training Environment Platform</title>
+  <style>
+    /* ========== Self-hosted fonts (no third-party CDN) ========== */
+    @font-face {
+      font-family: 'Inter';
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: url('assets/fonts/inter-latin-400-normal.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'Inter';
+      font-style: normal;
+      font-weight: 500;
+      font-display: swap;
+      src: url('assets/fonts/inter-latin-500-normal.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'Inter';
+      font-style: normal;
+      font-weight: 600;
+      font-display: swap;
+      src: url('assets/fonts/inter-latin-600-normal.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'JetBrains Mono';
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: url('assets/fonts/jetbrains-mono-latin-400-normal.woff2') format('woff2');
+    }
+
+    /* ========== Reset & Base ========== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0a0a0a;
+      color: #e5e5e5;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+    ::selection { background: rgba(100, 200, 180, 0.3); color: #fff; }
+
+    /* ========== Layout ========== */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 32px;
+    }
+    @media (max-width: 768px) {
+      .container { padding: 0 20px; }
+    }
+
+    /* ========== Nav ========== */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: rgba(10, 10, 10, 0.7);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 32px;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      color: #fff;
+      letter-spacing: -0.02em;
+    }
+    .nav-logo-mark {
+      width: 24px; height: 24px;
+      border: 1.5px solid rgba(255,255,255,0.8);
+      border-radius: 6px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .nav-logo-mark::before {
+      content: '';
+      width: 8px; height: 8px;
+      background: linear-gradient(135deg, #6ee7d1, #4eb8a8);
+      border-radius: 2px;
+    }
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: #a0a0a0;
+      text-decoration: none;
+      font-size: 13.5px;
+      font-weight: 400;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: #fff; }
+    .nav-cta {
+      padding: 8px 16px;
+      background: #fff;
+      color: #0a0a0a !important;
+      border-radius: 8px;
+      font-weight: 500 !important;
+      font-size: 13px !important;
+      transition: all 0.2s !important;
+    }
+    .nav-cta:hover { background: #d5d5d5 !important; }
+
+    /* Language toggle */
+    .lang-toggle {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.03);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      user-select: none;
+    }
+    .lang-option {
+      padding: 4px 10px;
+      border-radius: 5px;
+      color: #888;
+      transition: all 0.2s;
+    }
+    .lang-option.active {
+      background: #fff;
+      color: #0a0a0a;
+    }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+    }
+
+    /* ========== Hero ========== */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 120px 32px 80px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 800px; height: 800px;
+      background: radial-gradient(circle, rgba(100, 200, 180, 0.08) 0%, transparent 60%);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+      -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 100px;
+      font-size: 13px;
+      color: #a0a0a0;
+      margin-bottom: 32px;
+      background: rgba(255,255,255,0.02);
+    }
+    .hero-tag-dot {
+      width: 6px; height: 6px;
+      background: #6ee7d1;
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .hero h1 {
+      font-size: clamp(34px, 6vw, 64px);
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      color: #fff;
+      max-width: 900px;
+      margin-bottom: 28px;
+      position: relative;
+      z-index: 1;
+    }
+    .hero h1 .gradient-text {
+      background: linear-gradient(135deg, #6ee7d1 0%, #818cf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub {
+      font-size: clamp(16px, 2vw, 20px);
+      color: #888;
+      max-width: 680px;
+      line-height: 1.7;
+      margin-bottom: 44px;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-sub strong { color: #c5c5c5; font-weight: 500; }
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: 10px;
+      font-size: 14.5px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      border: none;
+    }
+    .btn-primary {
+      background: #fff;
+      color: #0a0a0a;
+    }
+    .btn-primary:hover {
+      background: #e5e5e5;
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: transparent;
+      color: #e5e5e5;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .btn-secondary:hover {
+      border-color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.05);
+    }
+    .btn-arrow {
+      transition: transform 0.2s;
+    }
+    .btn:hover .btn-arrow {
+      transform: translateX(3px);
+    }
+    .hero-scroll {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: #666;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .hero-scroll-line {
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(to bottom, #444, transparent);
+      animation: scrollHint 2s ease-in-out infinite;
+    }
+    @keyframes scrollHint {
+      0%, 100% { opacity: 0.3; transform: scaleY(0.6); }
+      50% { opacity: 1; transform: scaleY(1); }
+    }
+
+    /* ========== Section Common ========== */
+    section {
+      padding: 140px 0;
+      position: relative;
+    }
+    .section-label {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #6ee7d1;
+      margin-bottom: 20px;
+    }
+    .section-title {
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      line-height: 1.2;
+      color: #fff;
+      margin-bottom: 20px;
+      max-width: 720px;
+    }
+    .section-desc {
+      font-size: 17px;
+      color: #888;
+      line-height: 1.75;
+      max-width: 640px;
+    }
+    @media (max-width: 768px) {
+      section { padding: 80px 0; }
+    }
+
+    /* ========== Divider ========== */
+    .divider {
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(255,255,255,0.08), transparent);
+    }
+
+    /* ========== Problem Section ========== */
+    .problem-section {
+      background: linear-gradient(180deg, #0a0a0a 0%, #0d0d0d 100%);
+    }
+    .problem-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      margin-top: 60px;
+    }
+    @media (max-width: 900px) {
+      .problem-grid { grid-template-columns: 1fr; gap: 48px; }
+    }
+    .problem-item h3 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 14px;
+      letter-spacing: -0.01em;
+    }
+    .problem-item p {
+      color: #888;
+      font-size: 15px;
+      line-height: 1.75;
+    }
+    .problem-core {
+      margin-top: 80px;
+      padding: 40px;
+      border: 1px solid rgba(110, 231, 209, 0.15);
+      border-radius: 16px;
+      background: rgba(110, 231, 209, 0.03);
+      position: relative;
+    }
+    .problem-core::before {
+      content: attr(data-label);
+      position: absolute;
+      top: -12px; left: 28px;
+      padding: 0 12px;
+      background: #0d0d0d;
+      font-size: 12px;
+      font-weight: 500;
+      color: #6ee7d1;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .problem-core p {
+      font-size: 18px;
+      line-height: 1.8;
+      color: #c5c5c5;
+    }
+
+    /* ========== Why Tiktok / UGC Section ========== */
+    .ugc-section {
+      background: #0d0d0d;
+    }
+    .ugc-analogy {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 40px;
+      align-items: center;
+      margin-top: 60px;
+    }
+    @media (max-width: 900px) {
+      .ugc-analogy { grid-template-columns: 1fr; }
+    }
+    .analogy-card {
+      padding: 36px;
+      border: 1px solid #1a1a1a;
+      border-radius: 16px;
+      background: #0f0f0f;
+      transition: border-color 0.3s;
+    }
+    .analogy-card:hover {
+      border-color: #2a2a2a;
+    }
+    .analogy-card .icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      background: rgba(100, 200, 180, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+    .analogy-card h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+    .analogy-card p {
+      font-size: 14.5px;
+      color: #888;
+      line-height: 1.7;
+    }
+    .analogy-arrow {
+      color: #333;
+      font-size: 24px;
+    }
+    @media (max-width: 900px) {
+      .analogy-arrow { transform: rotate(90deg); text-align: center; }
+    }
+    .ugc-people {
+      margin-top: 80px;
+    }
+    .ugc-people h3 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 32px;
+      letter-spacing: -0.01em;
+    }
+    .people-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .people-tag {
+      padding: 8px 18px;
+      border: 1px solid #1a1a1a;
+      border-radius: 100px;
+      font-size: 13.5px;
+      color: #999;
+      background: #0f0f0f;
+      transition: all 0.2s;
+    }
+    .people-tag:hover {
+      border-color: #6ee7d1;
+      color: #6ee7d1;
+    }
+
+    /* ========== Platform Capabilities Section ========== */
+    .platform-section {
+      background: linear-gradient(180deg, #0d0d0d 0%, #0a0a0a 100%);
+    }
+    .pipeline {
+      margin-top: 60px;
+      position: relative;
+    }
+    .pipeline-step {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 32px;
+      padding: 32px 0;
+      border-top: 1px solid #1a1a1a;
+      position: relative;
+    }
+    .pipeline-step:last-child {
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .pipeline-step-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #6ee7d1;
+      padding-top: 4px;
+    }
+    .pipeline-step-content h3 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 12px;
+      letter-spacing: -0.01em;
+    }
+    .pipeline-step-content p {
+      color: #888;
+      font-size: 15px;
+      line-height: 1.75;
+      margin-bottom: 16px;
+    }
+    .pipeline-step-detail {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .pipeline-tag {
+      padding: 4px 12px;
+      border: 1px solid #1a1a1a;
+      border-radius: 6px;
+      font-size: 12.5px;
+      color: #777;
+      background: rgba(255,255,255,0.01);
+    }
+    .platform-footer-note {
+      margin-top: 60px;
+      padding-top: 40px;
+      border-top: 1px solid #1a1a1a;
+      font-size: 16px;
+      color: #666;
+      line-height: 1.8;
+      font-style: italic;
+    }
+    .platform-footer-note strong {
+      color: #a0a0a0;
+      font-style: normal;
+      font-weight: 500;
+    }
+
+    /* ========== MCP Section ========== */
+    .mcp-section {
+      background: #0a0a0a;
+    }
+    .mcp-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      margin-top: 60px;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .mcp-content { grid-template-columns: 1fr; gap: 48px; }
+    }
+    .mcp-text p {
+      color: #888;
+      font-size: 15.5px;
+      line-height: 1.8;
+      margin-bottom: 20px;
+    }
+    .mcp-text strong { color: #c5c5c5; font-weight: 500; }
+    .code-block {
+      background: #0f0f12;
+      border: 1px solid #1e1e22;
+      border-radius: 12px;
+      overflow: hidden;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.65;
+    }
+    .code-block-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      border-bottom: 1px solid #1e1e22;
+      background: #111114;
+    }
+    .code-block-title {
+      font-size: 11px;
+      color: #666;
+      letter-spacing: 0.05em;
+    }
+    .code-dots {
+      display: flex;
+      gap: 6px;
+    }
+    .code-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #2a2a30;
+    }
+    .code-block pre {
+      padding: 20px;
+      overflow-x: auto;
+      color: #a0a0a0;
+      white-space: pre;
+    }
+    .code-comment { color: #555; }
+    .code-key { color: #7dd3fc; }
+    .code-string { color: #86efac; }
+
+    .mcp-flow {
+      margin-top: 60px;
+      padding: 40px;
+      border: 1px solid #1a1a1a;
+      border-radius: 16px;
+      background: #0f0f0f;
+    }
+    .mcp-flow h4 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 28px;
+    }
+    .mcp-flow-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .mcp-flow-step {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .mcp-flow-step-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: rgba(110, 231, 209, 0.08);
+      border: 1px solid rgba(110, 231, 209, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 16px;
+    }
+    .mcp-flow-step h5 {
+      font-size: 14.5px;
+      font-weight: 500;
+      color: #e5e5e5;
+      margin-bottom: 4px;
+    }
+    .mcp-flow-step p {
+      font-size: 13.5px;
+      color: #777;
+      line-height: 1.6;
+    }
+
+    /* Preview Card */
+    .preview-card {
+      margin-top: 32px;
+      background: #0f0f12;
+      border: 1px solid #1e1e22;
+      border-radius: 14px;
+      padding: 24px;
+    }
+    .preview-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .preview-card-icon {
+      font-size: 20px;
+    }
+    .preview-card-header h4 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+    }
+    .preview-card-header span {
+      font-size: 12px;
+      color: #666;
+      margin-left: auto;
+    }
+    .preview-card-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .preview-field {
+      padding: 12px;
+      background: #15151a;
+      border-radius: 8px;
+    }
+    .preview-field-label {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .preview-field-value {
+      font-size: 13px;
+      color: #c5c5c5;
+      font-weight: 500;
+    }
+    .preview-card-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .preview-btn {
+      flex: 1;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid #1e1e22;
+      background: transparent;
+      color: #888;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .preview-btn.primary {
+      background: #fff;
+      color: #0a0a0a;
+      border-color: #fff;
+    }
+    .preview-btn:hover { opacity: 0.85; }
+    .preview-btn.secondary:hover {
+      border-color: #333;
+      color: #c5c5c5;
+    }
+
+    .privacy-settings {
+      margin-top: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .privacy-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border: 1px solid #1a1a1a;
+      border-radius: 10px;
+      font-size: 13.5px;
+      color: #999;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .privacy-item:hover {
+      border-color: #2a2a2a;
+      color: #c5c5c5;
+    }
+    .privacy-item.active {
+      border-color: rgba(110, 231, 209, 0.4);
+      background: rgba(110, 231, 209, 0.05);
+      color: #e5e5e5;
+    }
+    .privacy-radio {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      border: 2px solid #333;
+      flex-shrink: 0;
+    }
+    .privacy-item.active .privacy-radio {
+      border-color: #6ee7d1;
+      background: radial-gradient(circle, #6ee7d1 40%, transparent 45%);
+    }
+
+    /* ========== Environment Store Section ========== */
+    .store-section {
+      background: linear-gradient(180deg, #0a0a0a 0%, #0d0d0d 100%);
+    }
+    .store-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 48px;
+      flex-wrap: wrap;
+      gap: 24px;
+    }
+    .store-filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .store-filter {
+      padding: 8px 16px;
+      border: 1px solid #1a1a1a;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #888;
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .store-filter.active,
+    .store-filter:hover {
+      border-color: #6ee7d1;
+      color: #6ee7d1;
+    }
+    .env-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 20px;
+    }
+    @media (max-width: 768px) {
+      .env-grid { grid-template-columns: 1fr; }
+    }
+    .env-card {
+      background: #0f0f0f;
+      border: 1px solid #1a1a1a;
+      border-radius: 14px;
+      padding: 24px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      position: relative;
+    }
+    .env-card:hover {
+      border-color: #2a2a2a;
+      transform: translateY(-2px);
+    }
+    .env-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .env-category {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #6ee7d1;
+      padding: 4px 10px;
+      border: 1px solid rgba(110, 231, 209, 0.25);
+      border-radius: 6px;
+      background: rgba(110, 231, 209, 0.06);
+    }
+    .env-rating {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12.5px;
+      color: #fcd34d;
+      font-weight: 500;
+    }
+    .env-rating span { color: #888; font-weight: 400; }
+    .env-card h4 {
+      font-size: 17px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+      line-height: 1.4;
+    }
+    .env-card-desc {
+      font-size: 13.5px;
+      color: #888;
+      line-height: 1.65;
+      margin-bottom: 20px;
+    }
+    .env-card-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 16px;
+      border-top: 1px solid #1a1a1a;
+    }
+    .env-author {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .env-avatar {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6ee7d1, #818cf8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: #0a0a0a;
+    }
+    .env-author-name {
+      font-size: 12.5px;
+      color: #888;
+    }
+    .env-stats {
+      display: flex;
+      gap: 14px;
+      font-size: 12px;
+      color: #666;
+    }
+    .env-stat {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .env-price {
+      font-size: 13px;
+      font-weight: 500;
+      color: #86efac;
+    }
+    .env-price.free {
+      color: #6ee7d1;
+    }
+
+    /* ========== Long Tail Section ========== */
+    .longtail-section {
+      background: #0d0d0d;
+    }
+    .longtail-visual {
+      margin-top: 60px;
+      position: relative;
+      height: 300px;
+      display: flex;
+      align-items: flex-end;
+      padding: 40px 0;
+    }
+    .longtail-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      flex: 1;
+      height: 100%;
+    }
+    .longtail-bar {
+      flex: 1;
+      background: linear-gradient(to top, #1a1a2e, rgba(110, 231, 209, 0.3));
+      border-radius: 4px 4px 0 0;
+      position: relative;
+      transition: background 0.3s;
+    }
+    .longtail-bar.tail {
+      background: linear-gradient(to top, #1a1a2e, rgba(129, 140, 248, 0.3));
+    }
+    .longtail-labels {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 10px;
+      font-size: 12px;
+      color: #666;
+    }
+    .longtail-quote {
+      margin-top: 60px;
+      padding: 40px;
+      border-left: 2px solid #6ee7d1;
+      background: rgba(110, 231, 209, 0.03);
+    }
+    .longtail-quote p {
+      font-size: 20px;
+      line-height: 1.7;
+      color: #c5c5c5;
+      font-style: italic;
+    }
+    .longtail-quote cite {
+      display: block;
+      margin-top: 16px;
+      font-size: 13px;
+      color: #666;
+      font-style: normal;
+    }
+
+    /* ========== Incentives Section ========== */
+    .incentive-section {
+      background: linear-gradient(180deg, #0d0d0d 0%, #0a0a0a 100%);
+    }
+    .incentive-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 60px;
+    }
+    @media (max-width: 900px) {
+      .incentive-grid { grid-template-columns: 1fr; }
+    }
+    .incentive-card {
+      padding: 32px;
+      border: 1px solid #1a1a1a;
+      border-radius: 14px;
+      background: #0f0f0f;
+      transition: all 0.3s;
+    }
+    .incentive-card:hover {
+      border-color: #2a2a2a;
+    }
+    .incentive-icon {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      background: rgba(110, 231, 209, 0.08);
+      border: 1px solid rgba(110, 231, 209, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      font-size: 20px;
+    }
+    .incentive-card h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+    .incentive-card p {
+      font-size: 14.5px;
+      color: #888;
+      line-height: 1.7;
+    }
+    .incentive-note {
+      margin-top: 60px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      padding-top: 48px;
+      border-top: 1px solid #1a1a1a;
+    }
+    @media (max-width: 768px) {
+      .incentive-note { grid-template-columns: 1fr; }
+    }
+    .incentive-note h4 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+    .incentive-note p {
+      font-size: 14.5px;
+      color: #888;
+      line-height: 1.75;
+    }
+
+    /* ========== CTA Section ========== */
+    .cta-section {
+      background: #0a0a0a;
+      text-align: center;
+    }
+    .cta-box {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 80px 40px;
+      border: 1px solid #1a1a1a;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #0f0f0f 0%, #111114 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-box::before {
+      content: '';
+      position: absolute;
+      top: -50%; left: 50%;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(110, 231, 209, 0.08) 0%, transparent 60%);
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+    .cta-box h2 {
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      color: #fff;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .cta-box p {
+      font-size: 17px;
+      color: #888;
+      line-height: 1.75;
+      margin-bottom: 40px;
+      position: relative;
+    }
+    .cta-form {
+      display: flex;
+      gap: 12px;
+      max-width: 420px;
+      margin: 0 auto 16px;
+      position: relative;
+    }
+    @media (max-width: 600px) {
+      .cta-form { flex-direction: column; }
+    }
+    .cta-input {
+      flex: 1;
+      padding: 14px 18px;
+      background: #0a0a0a;
+      border: 1px solid #1e1e22;
+      border-radius: 10px;
+      color: #e5e5e5;
+      font-size: 14.5px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .cta-input:focus {
+      border-color: #6ee7d1;
+    }
+    .cta-input::placeholder { color: #555; }
+    .cta-subtext {
+      font-size: 12.5px !important;
+      color: #666 !important;
+      margin: 0 !important;
+    }
+    .cta-partners {
+      margin-top: 60px;
+      padding-top: 40px;
+      border-top: 1px solid #1a1a1a;
+      position: relative;
+    }
+    .cta-partners-label {
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #555;
+      margin-bottom: 24px;
+    }
+    .cta-partners-logos {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 40px;
+    }
+    .partner-logo {
+      font-size: 14px;
+      font-weight: 500;
+      color: #666;
+      letter-spacing: 0.02em;
+      transition: color 0.2s;
+    }
+    .partner-logo:hover { color: #a0a0a0; }
+
+    /* ========== Final Slogan Section ========== */
+    .slogan-section {
+      background: linear-gradient(180deg, #0a0a0a 0%, #050505 100%);
+      padding: 160px 0;
+      text-align: center;
+    }
+    .slogan-section .section-label {
+      margin-bottom: 40px;
+    }
+    .slogan-text {
+      font-size: clamp(28px, 4.5vw, 52px);
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      line-height: 1.3;
+      color: #fff;
+      max-width: 900px;
+      margin: 0 auto 32px;
+    }
+    .slogan-text .gradient-text {
+      background: linear-gradient(135deg, #6ee7d1 0%, #818cf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .slogan-sub {
+      font-size: 16px;
+      color: #666;
+      max-width: 560px;
+      margin: 0 auto;
+      line-height: 1.8;
+    }
+    .slogan-zh {
+      font-size: 15px;
+      color: #555;
+      margin-top: 40px;
+      font-style: italic;
+    }
+
+    /* ========== Footer ========== */
+    footer {
+      background: #050505;
+      border-top: 1px solid #141414;
+      padding: 60px 0 40px;
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 48px;
+      margin-bottom: 48px;
+    }
+    @media (max-width: 900px) {
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      .footer-grid { grid-template-columns: 1fr; }
+    }
+    .footer-brand p {
+      font-size: 13.5px;
+      color: #666;
+      line-height: 1.7;
+      margin-top: 16px;
+      max-width: 280px;
+    }
+    .footer-col h5 {
+      font-size: 13px;
+      font-weight: 500;
+      color: #a0a0a0;
+      margin-bottom: 20px;
+    }
+    .footer-col ul {
+      list-style: none;
+    }
+    .footer-col li {
+      margin-bottom: 12px;
+    }
+    .footer-col a {
+      font-size: 13.5px;
+      color: #666;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-col a:hover { color: #e5e5e5; }
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 32px;
+      border-top: 1px solid #141414;
+      font-size: 12.5px;
+      color: #555;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    /* ========== Reveal Animation ========== */
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+                  transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-inner">
+      <div class="nav-logo">
+        <div class="nav-logo-mark"></div>
+        <span>MCEnvstore</span>
+      </div>
+      <div class="nav-right">
+        <ul class="nav-links">
+          <li><a href="#problem" data-i18n="nav.problem">Problem</a></li>
+          <li><a href="#platform" data-i18n="nav.platform">Platform</a></li>
+          <li><a href="#mcp" data-i18n="nav.mcp">MCP Collector</a></li>
+          <li><a href="#store" data-i18n="nav.store">Store</a></li>
+          <li><a href="#incentive" data-i18n="nav.incentive">Incentives</a></li>
+          <li><a href="#cta" class="nav-cta" data-i18n="nav.cta">Join Waitlist</a></li>
+        </ul>
+        <div class="lang-toggle" id="langToggle">
+          <span class="lang-option active" data-lang="en">EN</span>
+          <span class="lang-option" data-lang="zh">中文</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero" id="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-tag">
+      <span class="hero-tag-dot"></span>
+      <span data-i18n="hero.tag">Agent Training Environment Platform</span>
+    </div>
+    <h1 data-i18n="hero.title">
+      A model's ceiling is set by<br>its <span class="gradient-text">training environments</span>.
+    </h1>
+    <p class="hero-sub" data-i18n="hero.sub">
+      Contributors only need to know "<strong>what tasks are worth training</strong>." The platform turns them into trainable, verifiable, anti-cheating, gradable environments.
+    </p>
+    <div class="hero-actions">
+      <a href="#cta" class="btn btn-primary" data-i18n="hero.ctaPrimary">
+        Become an Early Contributor
+        <span class="btn-arrow">→</span>
+      </a>
+      <a href="#platform" class="btn btn-secondary" data-i18n="hero.ctaSecondary">
+        Explore Platform
+      </a>
+    </div>
+    <div class="hero-scroll">
+      <span data-i18n="hero.scroll">Scroll</span>
+      <div class="hero-scroll-line"></div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Problem Section -->
+  <section class="problem-section" id="problem">
+    <div class="container">
+      <div class="reveal">
+        <span class="section-label" data-i18n="problem.label">Status Quo</span>
+        <h2 class="section-title" data-i18n="problem.title">How environments are made today</h2>
+        <p class="section-desc" data-i18n="problem.desc">
+          However smart a model is, if it's only trained on a handful of fixed tasks, it won't learn the long tail of the real world.
+        </p>
+      </div>
+      <div class="problem-grid reveal reveal-delay-1">
+        <div class="problem-item">
+          <h3 data-i18n="problem.item1Title">Synthesized in-house</h3>
+          <p data-i18n="problem.item1Desc">
+            Engineers write scripts and build synthesis pipelines to generate training environments. Coverage is limited by team size and domain knowledge — no matter how strong the pipeline, it can't cover the real long-tail tasks across every industry.
+          </p>
+        </div>
+        <div class="problem-item">
+          <h3 data-i18n="problem.item2Title">Procured from vendors</h3>
+          <p data-i18n="problem.item2Desc">
+            Custom-built per requirement, paid per project. No matter how large the data vendor, they don't know what tasks are actually worth training in every industry, every company, every niche software product. Long cycles, high cost, unpredictable quality.
+          </p>
+        </div>
+      </div>
+      <div class="problem-core reveal reveal-delay-2" data-label="The Core Contradiction" data-i18n-label="problem.coreLabel">
+        <p data-i18n="problem.coreText">
+          Chasing an infinite distribution of tasks with finite labor — that's the fundamental contradiction.<br><br>
+          As long as environments are produced by "a few people deciding what's worth training for everyone," the ceiling of agent capability will always be locked within the horizon of those few.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- UGC / Why TikTok Section -->
+  <section class="ugc-section" id="ugc">
+    <div class="container">
+      <div class="reveal">
+        <span class="section-label" data-i18n="ugc.label">Core Idea</span>
+        <h2 class="section-title" data-i18n="ugc.title">Why it works like TikTok</h2>
+        <p class="section-desc" data-i18n="ugc.desc">
+          TikTok doesn't produce content, yet it has more content than any TV station. Environments can be the same way.
+        </p>
+      </div>
+      <div class="ugc-analogy">
+        <div class="analogy-card reveal reveal-delay-1">
+          <div class="icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6ee7d1" stroke-width="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="4"></rect>
+              <path d="M9 9h6v6H9z"></path>
+            </svg>
+          </div>
+          <h3 data-i18n="ugc.card1Title">Anyone can create</h3>
+          <p data-i18n="ugc.card1Desc">
+            Phone cameras lowered the barrier to creation. Everyone knows what's interesting in their own life — pick up the phone and you can record, you can contribute.
+          </p>
+        </div>
+        <div class="analogy-arrow">→</div>
+        <div class="analogy-card reveal reveal-delay-2">
+          <div class="icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="1.5">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+              <path d="M2 17l10 5 10-5"></path>
+              <path d="M2 12l10 5 10-5"></path>
+            </svg>
+          </div>
+          <h3 data-i18n="ugc.card2Title">Anyone can contribute environments</h3>
+          <p data-i18n="ugc.card2Desc">
+            Accountants know the pitfalls of reconciliation. Lawyers know the critical clauses in contract review. SREs know the incident investigation playbook. They don't need to know RL or write verifiers — just that this is a task an agent should learn.
+          </p>
+        </div>
+      </div>
+      <div class="ugc-people reveal">
+        <h3 data-i18n="ugc.peopleTitle">Who defines what agents can do?</h3>
+        <div class="people-tags">
+          <span class="people-tag" data-i18n="ugc.tag1">Accountants</span>
+          <span class="people-tag" data-i18n="ugc.tag2">Lawyers</span>
+          <span class="people-tag" data-i18n="ugc.tag3">Doctors</span>
+          <span class="people-tag" data-i18n="ugc.tag4">Engineers</span>
+          <span class="people-tag" data-i18n="ugc.tag5">Designers</span>
+          <span class="people-tag" data-i18n="ugc.tag6">Teachers</span>
+          <span class="people-tag" data-i18n="ugc.tag7">SREs</span>
+          <span class="people-tag" data-i18n="ugc.tag8">Customer Support</span>
+          <span class="people-tag" data-i18n="ugc.tag9">Product Managers</span>
+          <span class="people-tag" data-i18n="ugc.tag10">Researchers</span>
+          <span class="people-tag" data-i18n="ugc.tag11">Craftspeople</span>
+          <span class="people-tag" data-i18n="ugc.tag12">Small Business Owners</span>
+          <span class="people-tag" data-i18n="ugc.tag13">Operations</span>
+          <span class="people-tag" data-i18n="ugc.tag14">Sales</span>
+          <span class="people-tag" data-i18n="ugc.tagMore">and more</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Platform Capabilities Section -->
+  <section class="platform-section" id="platform">
+    <div class="container">
+      <div class="reveal">
+        <span class="section-label" data-i18n="platform.label">Platform Capabilities</span>
+        <h2 class="section-title" data-i18n="platform.title">What the platform does</h2>
+        <p class="section-desc" data-i18n="platform.desc">
+          These are things model companies would otherwise build themselves. We believe they should be platform-level infrastructure, not wheels reinvented by every company.
+        </p>
+      </div>
+      <div class="pipeline">
+        <div class="pipeline-step reveal">
+          <div class="pipeline-step-num">01</div>
+          <div class="pipeline-step-content">
+            <h3 data-i18n="platform.step1Title">Automated Verifier Generation</h3>
+            <p data-i18n="platform.step1Desc">
+              Upload a task and describe "what counts as done." The platform auto-generates a verifier based on task type. Contributors only need to confirm or fine-tune — no coding from scratch.
+            </p>
+            <div class="pipeline-step-detail">
+              <span class="pipeline-tag" data-i18n="platform.step1Tag1">Code tasks → tests from reference impl.</span>
+              <span class="pipeline-tag" data-i18n="platform.step1Tag2">Rule-based → criteria to executable checks</span>
+              <span class="pipeline-tag" data-i18n="platform.step1Tag3">Document tasks → rubric from expected output</span>
+              <span class="pipeline-tag" data-i18n="platform.step1Tag4">Open-ended → grouped rubric from references</span>
+            </div>
+          </div>
+        </div>
+        <div class="pipeline-step reveal reveal-delay-1">
+          <div class="pipeline-step-num">02</div>
+          <div class="pipeline-step-content">
+            <h3 data-i18n="platform.step2Title">Anti-Cheating Audit</h3>
+            <p data-i18n="platform.step2Desc">
+              Once an environment is public, models will try every trick to cheat — it's an arms race. Every environment runs through a "Hack Agent" before launch to auto-detect vulnerabilities. Fix what can be fixed, delist what can't. Trajectories are continuously audited during training.
+            </p>
+            <div class="pipeline-step-detail">
+              <span class="pipeline-tag" data-i18n="platform.step2Tag1">Answer leak detection</span>
+              <span class="pipeline-tag" data-i18n="platform.step2Tag2">Irrelevant action bypass</span>
+              <span class="pipeline-tag" data-i18n="platform.step2Tag3">Plausible-wrong construction</span>
+              <span class="pipeline-tag" data-i18n="platform.step2Tag4">In-training trajectory audit</span>
+              <span class="pipeline-tag" data-i18n="platform.step2Tag5">Cheating reward zeroing</span>
+            </div>
+          </div>
+        </div>
+        <div class="pipeline-step reveal reveal-delay-2">
+          <div class="pipeline-step-num">03</div>
+          <div class="pipeline-step-content">
+            <h3 data-i18n="platform.step3Title">Grader as a Service</h3>
+            <p data-i18n="platform.step3Desc">
+              Binary pass/fail isn't enough. Two grading modes: GRS with task-specific rubrics for offline synthesis, and GAR with online pairwise comparison and advantage redistribution. Model companies just call the API — no implementation needed.
+            </p>
+            <div class="pipeline-step-detail">
+              <span class="pipeline-tag" data-i18n="platform.step3Tag1">GRS — offline rubric grading</span>
+              <span class="pipeline-tag" data-i18n="platform.step3Tag2">GAR — online pairwise comparison</span>
+              <span class="pipeline-tag" data-i18n="platform.step3Tag3">Advantage redistribution</span>
+              <span class="pipeline-tag" data-i18n="platform.step3Tag4">Unified API access</span>
+            </div>
+          </div>
+        </div>
+        <div class="pipeline-step reveal reveal-delay-3">
+          <div class="pipeline-step-num">04</div>
+          <div class="pipeline-step-content">
+            <h3 data-i18n="platform.step4Title">Isolation &amp; Standardization</h3>
+            <p data-i18n="platform.step4Desc">
+              Every environment runs in its own container with a unified Gym interface — resettable, reproducible, versioned. Network isolation, file isolation, and resource quotas are all default.
+            </p>
+            <div class="pipeline-step-detail">
+              <span class="pipeline-tag" data-i18n="platform.step4Tag1">Containerized isolation</span>
+              <span class="pipeline-tag" data-i18n="platform.step4Tag2">Unified Gym interface</span>
+              <span class="pipeline-tag" data-i18n="platform.step4Tag3">Resettable / Reproducible</span>
+              <span class="pipeline-tag" data-i18n="platform.step4Tag4">Version management</span>
+              <span class="pipeline-tag" data-i18n="platform.step4Tag5">Resource quotas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="platform-footer-note reveal" data-i18n="platform.footerNote">
+        <strong>Contributors only need to do one thing:</strong> describe the "obvious" work they do every day. The platform handles the rest — verifiers, anti-cheating, graders, isolation, standardization.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- MCP Section -->
+  <section class="mcp-section" id="mcp">
+    <div class="container">
+      <div class="reveal">
+        <span class="section-label" data-i18n="mcp.label">A Lighter Way to Contribute</span>
+        <h2 class="section-title">MCEnvstore MCP</h2>
+        <p class="section-desc" data-i18n="mcp.desc">
+          Put the environment collector inside the agent tools you use every day. You do nothing extra — just use agents normally — and you might contribute a real long-tail environment with verification signals.
+        </p>
+      </div>
+      <div class="mcp-content">
+        <div class="mcp-text reveal">
+          <p data-i18n="mcp.p1">
+            Just add <strong>one line of MCP config</strong> to any agent product — Codex, Cursor, Claude Code, MiMo Code, and more — then work as usual.
+          </p>
+          <p data-i18n="mcp.p2">
+            MCP listens quietly in the background without interrupting. It only flags <strong>"high-value fragments"</strong> — many back-and-forths with the agent, you correcting its mistakes, you finally saying "that's it, looks good."
+          </p>
+          <p data-i18n="mcp.p3">
+            It packages the workflow into a <strong>local environment draft</strong> — what the task is, initial state, what actions the agent took, what feedback you gave, what counts as done — then runs local anonymization.
+          </p>
+          <p data-i18n="mcp.p4">
+            Company names, project names, person names, emails, API keys, real financial numbers — <strong>all replaced with placeholders</strong>. Structure preserved, sensitive values replaced.
+          </p>
+          <p data-i18n="mcp.p5">
+            After anonymization, you get a preview. Upload only when you click "Confirm contribution" — choose "Ignore" and it disappears locally.
+          </p>
+        </div>
+        <div class="reveal reveal-delay-1">
+          <div class="code-block">
+            <div class="code-block-header">
+              <div class="code-dots">
+                <div class="code-dot"></div>
+                <div class="code-dot"></div>
+                <div class="code-dot"></div>
+              </div>
+              <span class="code-block-title">mcp.config.json</span>
+            </div>
+            <pre><span class="code-comment" data-i18n="mcp.codeComment">// Add to your agent config</span>
+{
+  <span class="code-key">"mcpServers"</span>: {
+    <span class="code-key">"mcenvstore"</span>: {
+      <span class="code-key">"command"</span>: <span class="code-string">"npx"</span>,
+      <span class="code-key">"args"</span>: [
+        <span class="code-string">"@mcenvstore/mcp-server"</span>,
+        <span class="code-string">"env"</span>
+      ],
+      <span class="code-key">"env"</span>: {
+        <span class="code-key">"MCENVSTORE_API_KEY"</span>: <span class="code-string">"your_key_here"</span>,
+        <span class="code-key">"CAPTURE_MODE"</span>: <span class="code-string">"suggest"</span>
+      }
+    }
+  }
+}</pre>
+          </div>
+
+          <div class="preview-card">
+            <div class="preview-card-header">
+              <span class="preview-card-icon">📦</span>
+              <h4 data-i18n="mcp.previewTitle">Found an environment worth contributing</h4>
+              <span data-i18n="mcp.previewTime">Just now</span>
+            </div>
+            <div class="preview-card-fields">
+              <div class="preview-field">
+                <div class="preview-field-label" data-i18n="mcp.previewFieldTask">Task</div>
+                <div class="preview-field-value" data-i18n="mcp.previewTaskVal">Monthly financial reconciliation</div>
+              </div>
+              <div class="preview-field">
+                <div class="preview-field-label" data-i18n="mcp.previewFieldDomain">Domain</div>
+                <div class="preview-field-value" data-i18n="mcp.previewDomainVal">Finance / Accounting</div>
+              </div>
+              <div class="preview-field">
+                <div class="preview-field-label" data-i18n="mcp.previewFieldSteps">Steps</div>
+                <div class="preview-field-value" data-i18n="mcp.previewStepsVal">12 steps</div>
+              </div>
+              <div class="preview-field">
+                <div class="preview-field-label" data-i18n="mcp.previewFieldTools">Tool calls</div>
+                <div class="preview-field-value" data-i18n="mcp.previewToolsVal">5 calls</div>
+              </div>
+              <div class="preview-field">
+                <div class="preview-field-label" data-i18n="mcp.previewFieldCorrections">Corrections</div>
+                <div class="preview-field-value" data-i18n="mcp.previewCorrectionsVal">3 times</div>
+              </div>
+              <div class="preview-field">
+                <div class="preview-field-label" data-i18n="mcp.previewFieldVerifier">Verifier type</div>
+                <div class="preview-field-value" data-i18n="mcp.previewVerifierVal">Rule-based checks</div>
+              </div>
+            </div>
+            <div class="preview-card-actions">
+              <button class="preview-btn secondary" data-i18n="mcp.previewBtnPreview">Preview full env.</button>
+              <button class="preview-btn secondary" data-i18n="mcp.previewBtnIgnore">Ignore</button>
+              <button class="preview-btn primary" data-i18n="mcp.previewBtnConfirm">Contribute</button>
+            </div>
+          </div>
+
+          <div class="privacy-settings">
+            <div class="privacy-item active">
+              <div class="privacy-radio"></div>
+              <span data-i18n="mcp.privacy1">Ask every time</span>
+            </div>
+            <div class="privacy-item">
+              <div class="privacy-radio"></div>
+              <span data-i18n="mcp.privacy2">Prompt on high-value only</span>
+            </div>
+            <div class="privacy-item">
+              <div class="privacy-radio"></div>
+              <span data-i18n="mcp.privacy3">Auto-upload, revocable</span>
+            </div>
+            <div class="privacy-item">
+              <div class="privacy-radio"></div>
+              <span data-i18n="mcp.privacy4">Local only</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mcp-flow reveal">
+        <h4 data-i18n="mcp.flowTitle">From a day's work to a published environment</h4>
+        <div class="mcp-flow-steps">
+          <div class="mcp-flow-step">
+            <div class="mcp-flow-step-icon">💬</div>
+            <div>
+              <h5 data-i18n="mcp.flow1Title">Use agents normally</h5>
+              <p data-i18n="mcp.flow1Desc">MCP listens in the background without interrupting your workflow. It only intervenes when it detects "high-value signals" like multi-turn interactions and corrections.</p>
+            </div>
+          </div>
+          <div class="mcp-flow-step">
+            <div class="mcp-flow-step-icon">🔒</div>
+            <div>
+              <h5 data-i18n="mcp.flow2Title">Local anonymization</h5>
+              <p data-i18n="mcp.flow2Desc">All sensitive info is replaced with placeholders locally — company names, project names, person names, emails, API keys, real numbers — all redacted. Structure preserved, no sensitive values left.</p>
+            </div>
+          </div>
+          <div class="mcp-flow-step">
+            <div class="mcp-flow-step-icon">👀</div>
+            <div>
+              <h5 data-i18n="mcp.flow3Title">Preview &amp; confirm</h5>
+              <p data-i18n="mcp.flow3Desc">You see the full anonymized environment draft and decide whether to contribute. Until you click "Confirm," data never leaves your device.</p>
+            </div>
+          </div>
+          <div class="mcp-flow-step">
+            <div class="mcp-flow-step-icon">⚙️</div>
+            <div>
+              <h5 data-i18n="mcp.flow4Title">Platform processing</h5>
+              <p data-i18n="mcp.flow4Desc">After upload: rebuild into standard interactive env → auto-generate verifier → run Hack Agent audit → connect grader → publish.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Environment Store Section -->
+  <section class="store-section" id="store">
+    <div class="container">
+      <div class="store-header">
+        <div class="reveal">
+          <span class="section-label" data-i18n="store.label">Environment Store</span>
+          <h2 class="section-title">UGC Environment Store</h2>
+          <p class="section-desc" data-i18n="store.desc">
+            GitHub-style browsing and collaboration, App Store-style ratings and consumption. Discover, use, and contribute real-world training environments.
+          </p>
+        </div>
+        <div class="store-filters reveal reveal-delay-1">
+          <button class="store-filter active" data-i18n="store.filterAll">All</button>
+          <button class="store-filter" data-i18n="store.filterFinance">Finance</button>
+          <button class="store-filter" data-i18n="store.filterLegal">Legal</button>
+          <button class="store-filter" data-i18n="store.filterDevops">DevOps</button>
+          <button class="store-filter" data-i18n="store.filterEdu">Education</button>
+          <button class="store-filter" data-i18n="store.filterSupport">Support</button>
+          <button class="store-filter" data-i18n="store.filterCode">Code</button>
+        </div>
+      </div>
+      <div class="env-grid">
+        <div class="env-card reveal">
+          <div class="env-card-top">
+            <span class="env-category" data-i18n="store.filterFinance">Finance</span>
+            <div class="env-rating">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              4.9 <span>(128)</span>
+            </div>
+          </div>
+          <h4 data-i18n="store.env1Title">Three-statement Reconciliation &amp; Variance Report</h4>
+          <p class="env-card-desc" data-i18n="store.env1Desc">
+            Given balance sheet, income statement, and cash flow statement, verify articulation across all three, identify variances, and produce a structured reconciliation report.
+          </p>
+          <div class="env-card-meta">
+            <div class="env-author">
+              <div class="env-avatar">W</div>
+              <span class="env-author-name">wang_audit</span>
+            </div>
+            <div class="env-stats">
+              <span class="env-stat">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                2.4k
+              </span>
+              <span class="env-price">$48 / 1k runs</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="env-card reveal reveal-delay-1">
+          <div class="env-card-top">
+            <span class="env-category" data-i18n="store.filterLegal">Legal</span>
+            <div class="env-rating">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              4.7 <span>(86)</span>
+            </div>
+          </div>
+          <h4 data-i18n="store.env2Title">Contract Review: Key Clause Risk Identification</h4>
+          <p class="env-card-desc" data-i18n="store.env2Desc">
+            Review commercial contract text, identify 20 categories of high-risk clauses (liability for breach, jurisdiction, IP, confidentiality term, etc.), output risk levels and revision suggestions.
+          </p>
+          <div class="env-card-meta">
+            <div class="env-author">
+              <div class="env-avatar">L</div>
+              <span class="env-author-name">li_lawyer</span>
+            </div>
+            <div class="env-stats">
+              <span class="env-stat">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                1.8k
+              </span>
+              <span class="env-price">$36 / 1k runs</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="env-card reveal reveal-delay-2">
+          <div class="env-card-top">
+            <span class="env-category" data-i18n="store.filterDevops">DevOps</span>
+            <div class="env-rating">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              4.8 <span>(156)</span>
+            </div>
+          </div>
+          <h4 data-i18n="store.env3Title">Production Incident Investigation Playbook</h4>
+          <p class="env-card-desc" data-i18n="store.env3Desc">
+            Inject faults into a simulated microservices architecture. Agent must follow standard SOP to identify root cause and remediate. Verifies completeness of investigation path and recovery outcome.
+          </p>
+          <div class="env-card-meta">
+            <div class="env-author">
+              <div class="env-avatar">Z</div>
+              <span class="env-author-name">zhao_sre</span>
+            </div>
+            <div class="env-stats">
+              <span class="env-stat">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                3.1k
+              </span>
+              <span class="env-price free" data-i18n="store.free">Free</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="env-card reveal">
+          <div class="env-card-top">
+            <span class="env-category" data-i18n="store.filterEdu">Education</span>
+            <div class="env-rating">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              4.6 <span>(203)</span>
+            </div>
+          </div>
+          <h4 data-i18n="store.env4Title">Middle School Math: Misconception Diagnosis</h4>
+          <p class="env-card-desc" data-i18n="store.env4Desc">
+            Given a student's incorrect solution process, diagnose the underlying conceptual misunderstanding, explain it with appropriate analogies, then provide two variant problems of the same type to verify understanding.
+          </p>
+          <div class="env-card-meta">
+            <div class="env-author">
+              <div class="env-avatar">C</div>
+              <span class="env-author-name">chen_teacher</span>
+            </div>
+            <div class="env-stats">
+              <span class="env-stat">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                4.5k
+              </span>
+              <span class="env-price">$24 / 1k runs</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="env-card reveal reveal-delay-1">
+          <div class="env-card-top">
+            <span class="env-category" data-i18n="store.filterSupport">Support</span>
+            <div class="env-rating">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              4.5 <span>(112)</span>
+            </div>
+          </div>
+          <h4 data-i18n="store.env5Title">E-commerce After-sales: True Resolution Detection</h4>
+          <p class="env-card-desc" data-i18n="store.env5Desc">
+            After multi-turn customer support conversation, determine whether the user's actual problem was fundamentally resolved (not just procedurally answered). Distinguish apparent resolution from genuine satisfaction.
+          </p>
+          <div class="env-card-meta">
+            <div class="env-author">
+              <div class="env-avatar">S</div>
+              <span class="env-author-name">sun_cs</span>
+            </div>
+            <div class="env-stats">
+              <span class="env-stat">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                1.2k
+              </span>
+              <span class="env-price">$32 / 1k runs</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="env-card reveal reveal-delay-2">
+          <div class="env-card-top">
+            <span class="env-category" data-i18n="store.filterCode">Code</span>
+            <div class="env-rating">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              4.9 <span>(312)</span>
+            </div>
+          </div>
+          <h4 data-i18n="store.env6Title">Legacy System Refactoring &amp; Regression Tests</h4>
+          <p class="env-card-desc" data-i18n="store.env6Desc">
+            Given a legacy codebase with poor test coverage, refactor a specified module and add comprehensive regression tests. Verifies functional equivalence and test coverage targets after refactoring.
+          </p>
+          <div class="env-card-meta">
+            <div class="env-author">
+              <div class="env-avatar">H</div>
+              <span class="env-author-name">hu_dev</span>
+            </div>
+            <div class="env-stats">
+              <span class="env-stat">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                5.8k
+              </span>
+              <span class="env-price">$56 / 1k runs</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Long Tail Section -->
+  <section class="longtail-section" id="longtail">
+    <div class="container">
+      <div class="reveal">
+        <span class="section-label" data-i18n="longtail.label">Long Tail Value</span>
+        <h2 class="section-title" data-i18n="longtail.title">Why everyone should participate</h2>
+        <p class="section-desc" data-i18n="longtail.desc">
+          Model companies can only hire so many domain experts. But the world has practitioners in every industry, internal processes at every company, users of every niche software, and localized tasks in every region.
+        </p>
+      </div>
+      <div class="longtail-visual reveal reveal-delay-1">
+        <div class="longtail-labels">
+          <span data-i18n="longtail.common">Common tasks</span>
+          <span data-i18n="longtail.tail">Long-tail tasks</span>
+        </div>
+        <div class="longtail-bars" id="longtail-bars">
+          <!-- Generated by JS -->
+        </div>
+      </div>
+      <div class="longtail-quote reveal reveal-delay-2">
+        <p data-i18n="longtail.quote">
+          A single financial reconciliation environment contributed by an accountant may be more valuable than a hundred generic finance tasks synthesized by a model company.
+        </p>
+        <cite data-i18n="longtail.cite">— That's the long-tail power of UGC environments</cite>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Incentives Section -->
+  <section class="incentive-section" id="incentive">
+    <div class="container">
+      <div class="reveal">
+        <span class="section-label" data-i18n="incentive.label">Incentives</span>
+        <h2 class="section-title" data-i18n="incentive.title">What contributors get</h2>
+        <p class="section-desc" data-i18n="incentive.desc">
+          Like creator revenue sharing on content platforms — you contribute environments, the platform distributes them to those who need them, you earn. And high-quality environments don't decay in value quickly over time.
+        </p>
+      </div>
+      <div class="incentive-grid">
+        <div class="incentive-card reveal">
+          <div class="incentive-icon">💰</div>
+          <h3 data-i18n="incentive.card1Title">Revenue Sharing</h3>
+          <p data-i18n="incentive.card1Desc">
+            When model companies train on environments you've contributed, the platform tracks usage. Tokens paid by model companies are proportionally distributed to contributors. The more useful and consumed your environment, the more you earn.
+          </p>
+        </div>
+        <div class="incentive-card reveal reveal-delay-1">
+          <div class="incentive-icon">⭐</div>
+          <h3 data-i18n="incentive.card2Title">Reputation Points</h3>
+          <p data-i18n="incentive.card2Desc">
+            High-quality environments earn community ratings and reputation points, increasing your influence on the platform. Top contributors gain early environment review rights, beta access to new features, and more.
+          </p>
+        </div>
+        <div class="incentive-card reveal reveal-delay-2">
+          <div class="incentive-icon">🔑</div>
+          <h3 data-i18n="incentive.card3Title">Access Rewards</h3>
+          <p data-i18n="incentive.card3Desc">
+            Contributing environments earns you access to other environments, or priority testing access to new models. The more you contribute, the more resources you can use — a positive feedback loop.
+          </p>
+        </div>
+      </div>
+      <div class="incentive-note reveal">
+        <div>
+          <h4 data-i18n="incentive.note1Title">More cumulative than video</h4>
+          <p data-i18n="incentive.note1Desc">
+            On content platforms, video traffic decays quickly over time. But high-quality environments can be reused, iterated on, and composed. A well-validated environment may keep appreciating as more models consume it.
+          </p>
+        </div>
+        <div>
+          <h4 data-i18n="incentive.note2Title">Every user is an environment collector</h4>
+          <p data-i18n="incentive.note2Desc">
+            With MCP, a million users means a million environment sources. Every correction, every debugging session in your normal agent use could become a valuable environment for someone else's model training.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- CTA Section -->
+  <section class="cta-section" id="cta">
+    <div class="container">
+      <div class="cta-box reveal">
+        <span class="section-label" data-i18n="cta.label">Join Us</span>
+        <h2 data-i18n="cta.title">We're calling on everyone who knows<br>"what is worth training"</h2>
+        <p data-i18n="cta.desc">
+          Accountants, lawyers, doctors, engineers, designers, teachers, SREs, support agents, product managers, researchers…<br>
+          the "obvious" things you do every day are exactly what agents most need to learn.
+        </p>
+        <form class="cta-form" onsubmit="event.preventDefault(); this.querySelector('button').textContent = window.I18N.current === 'en' ? 'Submitted ✓' : '已提交 ✓';">
+          <input type="email" class="cta-input" data-i18n-placeholder="cta.placeholder" placeholder="Enter your email" required>
+          <button type="submit" class="btn btn-primary" data-i18n="cta.button">Join Waitlist</button>
+        </form>
+        <p class="cta-subtext" data-i18n="cta.subtext">MCEnvstore will be open source and launching soon. Seeking our first contributors and partners.</p>
+
+        <div class="cta-partners">
+          <div class="cta-partners-label" data-i18n="cta.partnersLabel">First partners are joining</div>
+          <div class="cta-partners-logos">
+            <span class="partner-logo">Codex</span>
+            <span class="partner-logo">Cursor</span>
+            <span class="partner-logo">Claude Code</span>
+            <span class="partner-logo">MiMo Code</span>
+            <span class="partner-logo" data-i18n="cta.more">+ more</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Final Slogan Section -->
+  <section class="slogan-section" id="slogan">
+    <div class="container">
+      <div class="reveal">
+        <span class="section-label" data-i18n="slogan.label">Vision</span>
+        <h2 class="slogan-text" data-i18n="slogan.title">
+          The future of Agents should not be defined only by<br>
+          <span class="gradient-text">a few model companies</span>.<br>
+          It should be defined by everyone who knows<br>
+          <span class="gradient-text">"what is worth training."</span>
+        </h2>
+        <p class="slogan-zh" data-i18n="slogan.zh">
+          We're not building another data labeling platform. Labeling is low-dimensional — is this answer right or wrong? Environments are high-dimensional — how does this world work?
+        </p>
+        <p class="slogan-sub" data-i18n="slogan.sub">
+          We're building a place where everyone who knows "what is worth training" can contribute.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="nav-logo">
+            <div class="nav-logo-mark"></div>
+            <span>MCEnvstore</span>
+          </div>
+          <p data-i18n="footer.tagline">
+            Agent training environment platform.<br>
+            The best of GitHub + App Store + TikTok.<br>
+            Where anyone who knows what's worth training can contribute.
+          </p>
+        </div>
+        <div class="footer-col">
+          <h5 data-i18n="footer.product">Product</h5>
+          <ul>
+            <li><a href="#platform" data-i18n="footer.platform">Platform</a></li>
+            <li><a href="#mcp" data-i18n="footer.mcp">MCP Collector</a></li>
+            <li><a href="#store" data-i18n="footer.store">Environment Store</a></li>
+            <li><a href="#incentive" data-i18n="footer.incentive">Incentives</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5 data-i18n="footer.resources">Resources</h5>
+          <ul>
+            <li><a href="#" data-i18n="footer.docs">Docs</a></li>
+            <li><a href="#" data-i18n="footer.api">API Reference</a></li>
+            <li><a href="#" data-i18n="footer.opensource">Open Source</a></li>
+            <li><a href="#" data-i18n="footer.contributing">Contributing</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5 data-i18n="footer.about">About</h5>
+          <ul>
+            <li><a href="#" data-i18n="footer.team">Team</a></li>
+            <li><a href="#" data-i18n="footer.blog">Blog</a></li>
+            <li><a href="#" data-i18n="footer.contact">Contact</a></li>
+            <li><a href="#" data-i18n="footer.privacy">Privacy</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 MCEnvstore. All rights reserved.</span>
+        <span data-i18n="footer.built">Built for the future of Agent training.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ========== I18N Translations ==========
+    const I18N = {
+      current: 'en',
+      translations: {
+        en: {
+          // nav
+          'nav.problem': 'Problem',
+          'nav.platform': 'Platform',
+          'nav.mcp': 'MCP Collector',
+          'nav.store': 'Store',
+          'nav.incentive': 'Incentives',
+          'nav.cta': 'Join Waitlist',
+          // hero
+          'hero.tag': 'Agent Training Environment Platform',
+          'hero.title': 'A model\'s ceiling is set by<br>its <span class="gradient-text">training environments</span>.',
+          'hero.sub': 'Contributors only need to know "<strong>what tasks are worth training</strong>." The platform turns them into trainable, verifiable, anti-cheating, gradable environments.',
+          'hero.ctaPrimary': 'Become an Early Contributor <span class="btn-arrow">→</span>',
+          'hero.ctaSecondary': 'Explore Platform',
+          'hero.scroll': 'Scroll',
+          // problem
+          'problem.label': 'Status Quo',
+          'problem.title': 'How environments are made today',
+          'problem.desc': 'However smart a model is, if it\'s only trained on a handful of fixed tasks, it won\'t learn the long tail of the real world.',
+          'problem.item1Title': 'Synthesized in-house',
+          'problem.item1Desc': 'Engineers write scripts and build synthesis pipelines to generate training environments. Coverage is limited by team size and domain knowledge — no matter how strong the pipeline, it can\'t cover the real long-tail tasks across every industry.',
+          'problem.item2Title': 'Procured from vendors',
+          'problem.item2Desc': 'Custom-built per requirement, paid per project. No matter how large the data vendor, they don\'t know what tasks are actually worth training in every industry, every company, every niche software product. Long cycles, high cost, unpredictable quality.',
+          'problem.coreLabel': 'The Core Contradiction',
+          'problem.coreText': 'Chasing an infinite distribution of tasks with finite labor — that\'s the fundamental contradiction.<br><br>As long as environments are produced by "a few people deciding what\'s worth training for everyone," the ceiling of agent capability will always be locked within the horizon of those few.',
+          // ugc
+          'ugc.label': 'Core Idea',
+          'ugc.title': 'Why it works like TikTok',
+          'ugc.desc': 'TikTok doesn\'t produce content, yet it has more content than any TV station. Environments can be the same way.',
+          'ugc.card1Title': 'Anyone can create',
+          'ugc.card1Desc': 'Phone cameras lowered the barrier to creation. Everyone knows what\'s interesting in their own life — pick up the phone and you can record, you can contribute.',
+          'ugc.card2Title': 'Anyone can contribute environments',
+          'ugc.card2Desc': 'Accountants know the pitfalls of reconciliation. Lawyers know the critical clauses in contract review. SREs know the incident investigation playbook. They don\'t need to know RL or write verifiers — just that this is a task an agent should learn.',
+          'ugc.peopleTitle': 'Who defines what agents can do?',
+          'ugc.tag1': 'Accountants',
+          'ugc.tag2': 'Lawyers',
+          'ugc.tag3': 'Doctors',
+          'ugc.tag4': 'Engineers',
+          'ugc.tag5': 'Designers',
+          'ugc.tag6': 'Teachers',
+          'ugc.tag7': 'SREs',
+          'ugc.tag8': 'Customer Support',
+          'ugc.tag9': 'Product Managers',
+          'ugc.tag10': 'Researchers',
+          'ugc.tag11': 'Craftspeople',
+          'ugc.tag12': 'Small Business Owners',
+          'ugc.tag13': 'Operations',
+          'ugc.tag14': 'Sales',
+          'ugc.tagMore': 'and more',
+          // platform
+          'platform.label': 'Platform Capabilities',
+          'platform.title': 'What the platform does',
+          'platform.desc': 'These are things model companies would otherwise build themselves. We believe they should be platform-level infrastructure, not wheels reinvented by every company.',
+          'platform.step1Title': 'Automated Verifier Generation',
+          'platform.step1Desc': 'Upload a task and describe "what counts as done." The platform auto-generates a verifier based on task type. Contributors only need to confirm or fine-tune — no coding from scratch.',
+          'platform.step1Tag1': 'Code tasks → tests from reference impl.',
+          'platform.step1Tag2': 'Rule-based → criteria to executable checks',
+          'platform.step1Tag3': 'Document tasks → rubric from expected output',
+          'platform.step1Tag4': 'Open-ended → grouped rubric from references',
+          'platform.step2Title': 'Anti-Cheating Audit',
+          'platform.step2Desc': 'Once an environment is public, models will try every trick to cheat — it\'s an arms race. Every environment runs through a "Hack Agent" before launch to auto-detect vulnerabilities. Fix what can be fixed, delist what can\'t. Trajectories are continuously audited during training.',
+          'platform.step2Tag1': 'Answer leak detection',
+          'platform.step2Tag2': 'Irrelevant action bypass',
+          'platform.step2Tag3': 'Plausible-wrong construction',
+          'platform.step2Tag4': 'In-training trajectory audit',
+          'platform.step2Tag5': 'Cheating reward zeroing',
+          'platform.step3Title': 'Grader as a Service',
+          'platform.step3Desc': 'Binary pass/fail isn\'t enough. Two grading modes: GRS with task-specific rubrics for offline synthesis, and GAR with online pairwise comparison and advantage redistribution. Model companies just call the API — no implementation needed.',
+          'platform.step3Tag1': 'GRS — offline rubric grading',
+          'platform.step3Tag2': 'GAR — online pairwise comparison',
+          'platform.step3Tag3': 'Advantage redistribution',
+          'platform.step3Tag4': 'Unified API access',
+          'platform.step4Title': 'Isolation & Standardization',
+          'platform.step4Desc': 'Every environment runs in its own container with a unified Gym interface — resettable, reproducible, versioned. Network isolation, file isolation, and resource quotas are all default.',
+          'platform.step4Tag1': 'Containerized isolation',
+          'platform.step4Tag2': 'Unified Gym interface',
+          'platform.step4Tag3': 'Resettable / Reproducible',
+          'platform.step4Tag4': 'Version management',
+          'platform.step4Tag5': 'Resource quotas',
+          'platform.footerNote': '<strong>Contributors only need to do one thing:</strong> describe the "obvious" work they do every day. The platform handles the rest — verifiers, anti-cheating, graders, isolation, standardization.',
+          // mcp
+          'mcp.label': 'A Lighter Way to Contribute',
+          'mcp.desc': 'Put the environment collector inside the agent tools you use every day. You do nothing extra — just use agents normally — and you might contribute a real long-tail environment with verification signals.',
+          'mcp.p1': 'Just add <strong>one line of MCP config</strong> to any agent product — Codex, Cursor, Claude Code, MiMo Code, and more — then work as usual.',
+          'mcp.p2': 'MCP listens quietly in the background without interrupting. It only flags <strong>"high-value fragments"</strong> — many back-and-forths with the agent, you correcting its mistakes, you finally saying "that\'s it, looks good."',
+          'mcp.p3': 'It packages the workflow into a <strong>local environment draft</strong> — what the task is, initial state, what actions the agent took, what feedback you gave, what counts as done — then runs local anonymization.',
+          'mcp.p4': 'Company names, project names, person names, emails, API keys, real financial numbers — <strong>all replaced with placeholders</strong>. Structure preserved, sensitive values replaced.',
+          'mcp.p5': 'After anonymization, you get a preview. Upload only when you click "Confirm contribution" — choose "Ignore" and it disappears locally.',
+          'mcp.codeComment': '// Add to your agent config',
+          'mcp.previewTitle': 'Found an environment worth contributing',
+          'mcp.previewTime': 'Just now',
+          'mcp.previewFieldTask': 'Task',
+          'mcp.previewTaskVal': 'Monthly financial reconciliation',
+          'mcp.previewFieldDomain': 'Domain',
+          'mcp.previewDomainVal': 'Finance / Accounting',
+          'mcp.previewFieldSteps': 'Steps',
+          'mcp.previewStepsVal': '12 steps',
+          'mcp.previewFieldTools': 'Tool calls',
+          'mcp.previewToolsVal': '5 calls',
+          'mcp.previewFieldCorrections': 'Corrections',
+          'mcp.previewCorrectionsVal': '3 times',
+          'mcp.previewFieldVerifier': 'Verifier type',
+          'mcp.previewVerifierVal': 'Rule-based checks',
+          'mcp.previewBtnPreview': 'Preview full env.',
+          'mcp.previewBtnIgnore': 'Ignore',
+          'mcp.previewBtnConfirm': 'Contribute',
+          'mcp.privacy1': 'Ask every time',
+          'mcp.privacy2': 'Prompt on high-value only',
+          'mcp.privacy3': 'Auto-upload, revocable',
+          'mcp.privacy4': 'Local only',
+          'mcp.flowTitle': 'From a day\'s work to a published environment',
+          'mcp.flow1Title': 'Use agents normally',
+          'mcp.flow1Desc': 'MCP listens in the background without interrupting your workflow. It only intervenes when it detects "high-value signals" like multi-turn interactions and corrections.',
+          'mcp.flow2Title': 'Local anonymization',
+          'mcp.flow2Desc': 'All sensitive info is replaced with placeholders locally — company names, project names, person names, emails, API keys, real numbers — all redacted. Structure preserved, no sensitive values left.',
+          'mcp.flow3Title': 'Preview & confirm',
+          'mcp.flow3Desc': 'You see the full anonymized environment draft and decide whether to contribute. Until you click "Confirm," data never leaves your device.',
+          'mcp.flow4Title': 'Platform processing',
+          'mcp.flow4Desc': 'After upload: rebuild into standard interactive env → auto-generate verifier → run Hack Agent audit → connect grader → publish.',
+          // store
+          'store.label': 'Environment Store',
+          'store.desc': 'GitHub-style browsing and collaboration, App Store-style ratings and consumption. Discover, use, and contribute real-world training environments.',
+          'store.filterAll': 'All',
+          'store.filterFinance': 'Finance',
+          'store.filterLegal': 'Legal',
+          'store.filterDevops': 'DevOps',
+          'store.filterEdu': 'Education',
+          'store.filterSupport': 'Support',
+          'store.filterCode': 'Code',
+          'store.free': 'Free',
+          'store.env1Title': 'Three-statement Reconciliation & Variance Report',
+          'store.env1Desc': 'Given balance sheet, income statement, and cash flow statement, verify articulation across all three, identify variances, and produce a structured reconciliation report.',
+          'store.env2Title': 'Contract Review: Key Clause Risk Identification',
+          'store.env2Desc': 'Review commercial contract text, identify 20 categories of high-risk clauses (liability for breach, jurisdiction, IP, confidentiality term, etc.), output risk levels and revision suggestions.',
+          'store.env3Title': 'Production Incident Investigation Playbook',
+          'store.env3Desc': 'Inject faults into a simulated microservices architecture. Agent must follow standard SOP to identify root cause and remediate. Verifies completeness of investigation path and recovery outcome.',
+          'store.env4Title': 'Middle School Math: Misconception Diagnosis',
+          'store.env4Desc': 'Given a student\'s incorrect solution process, diagnose the underlying conceptual misunderstanding, explain it with appropriate analogies, then provide two variant problems of the same type to verify understanding.',
+          'store.env5Title': 'E-commerce After-sales: True Resolution Detection',
+          'store.env5Desc': 'After multi-turn customer support conversation, determine whether the user\'s actual problem was fundamentally resolved (not just procedurally answered). Distinguish apparent resolution from genuine satisfaction.',
+          'store.env6Title': 'Legacy System Refactoring & Regression Tests',
+          'store.env6Desc': 'Given a legacy codebase with poor test coverage, refactor a specified module and add comprehensive regression tests. Verifies functional equivalence and test coverage targets after refactoring.',
+          // longtail
+          'longtail.label': 'Long Tail Value',
+          'longtail.title': 'Why everyone should participate',
+          'longtail.desc': 'Model companies can only hire so many domain experts. But the world has practitioners in every industry, internal processes at every company, users of every niche software, and localized tasks in every region.',
+          'longtail.common': 'Common tasks',
+          'longtail.tail': 'Long-tail tasks',
+          'longtail.quote': 'A single financial reconciliation environment contributed by an accountant may be more valuable than a hundred generic finance tasks synthesized by a model company.',
+          'longtail.cite': '— That\'s the long-tail power of UGC environments',
+          // incentive
+          'incentive.label': 'Incentives',
+          'incentive.title': 'What contributors get',
+          'incentive.desc': 'Like creator revenue sharing on content platforms — you contribute environments, the platform distributes them to those who need them, you earn. And high-quality environments don\'t decay in value quickly over time.',
+          'incentive.card1Title': 'Revenue Sharing',
+          'incentive.card1Desc': 'When model companies train on environments you\'ve contributed, the platform tracks usage. Tokens paid by model companies are proportionally distributed to contributors. The more useful and consumed your environment, the more you earn.',
+          'incentive.card2Title': 'Reputation Points',
+          'incentive.card2Desc': 'High-quality environments earn community ratings and reputation points, increasing your influence on the platform. Top contributors gain early environment review rights, beta access to new features, and more.',
+          'incentive.card3Title': 'Access Rewards',
+          'incentive.card3Desc': 'Contributing environments earns you access to other environments, or priority testing access to new models. The more you contribute, the more resources you can use — a positive feedback loop.',
+          'incentive.note1Title': 'More cumulative than video',
+          'incentive.note1Desc': 'On content platforms, video traffic decays quickly over time. But high-quality environments can be reused, iterated on, and composed. A well-validated environment may keep appreciating as more models consume it.',
+          'incentive.note2Title': 'Every user is an environment collector',
+          'incentive.note2Desc': 'With MCP, a million users means a million environment sources. Every correction, every debugging session in your normal agent use could become a valuable environment for someone else\'s model training.',
+          // cta
+          'cta.label': 'Join Us',
+          'cta.title': 'We\'re calling on everyone who knows<br>"what is worth training"',
+          'cta.desc': 'Accountants, lawyers, doctors, engineers, designers, teachers, SREs, support agents, product managers, researchers…<br>the "obvious" things you do every day are exactly what agents most need to learn.',
+          'cta.placeholder': 'Enter your email',
+          'cta.button': 'Join Waitlist',
+          'cta.subtext': 'MCEnvstore will be open source and launching soon. Seeking our first contributors and partners.',
+          'cta.partnersLabel': 'First partners are joining',
+          'cta.more': '+ more',
+          // slogan
+          'slogan.label': 'Vision',
+          'slogan.title': 'The future of Agents should not be defined only by<br><span class="gradient-text">a few model companies</span>.<br>It should be defined by everyone who knows<br><span class="gradient-text">"what is worth training."</span>',
+          'slogan.zh': 'We\'re not building another data labeling platform. Labeling is low-dimensional — is this answer right or wrong? Environments are high-dimensional — how does this world work?',
+          'slogan.sub': 'We\'re building a place where everyone who knows "what is worth training" can contribute.',
+          // footer
+          'footer.tagline': 'Agent training environment platform.<br>The best of GitHub + App Store + TikTok.<br>Where anyone who knows what\'s worth training can contribute.',
+          'footer.product': 'Product',
+          'footer.platform': 'Platform',
+          'footer.mcp': 'MCP Collector',
+          'footer.store': 'Environment Store',
+          'footer.incentive': 'Incentives',
+          'footer.resources': 'Resources',
+          'footer.docs': 'Docs',
+          'footer.api': 'API Reference',
+          'footer.opensource': 'Open Source',
+          'footer.contributing': 'Contributing',
+          'footer.about': 'About',
+          'footer.team': 'Team',
+          'footer.blog': 'Blog',
+          'footer.contact': 'Contact',
+          'footer.privacy': 'Privacy',
+          'footer.built': 'Built for the future of Agent training.'
+        },
+        zh: {
+          // nav
+          'nav.problem': '痛点',
+          'nav.platform': '平台能力',
+          'nav.mcp': 'MCP 采集器',
+          'nav.store': '环境市场',
+          'nav.incentive': '激励',
+          'nav.cta': '加入等待列表',
+          // hero
+          'hero.tag': 'Agent Training Environment Platform',
+          'hero.title': '模型的上限，<br>由 <span class="gradient-text">训练环境</span> 决定。',
+          'hero.sub': '贡献者只负责「<strong>我知道什么任务值得训练</strong>」，<br>平台负责「把它变成可训练、可验证、防作弊、可打分的环境」。',
+          'hero.ctaPrimary': '成为第一批贡献者 <span class="btn-arrow">→</span>',
+          'hero.ctaSecondary': '了解平台能力',
+          'hero.scroll': 'Scroll',
+          // problem
+          'problem.label': '现状',
+          'problem.title': '今天的环境是怎么产出的',
+          'problem.desc': '模型再聪明，若只在几个固定任务上训练过，就学不会现实世界的长尾。',
+          'problem.item1Title': '模型公司自己合成',
+          'problem.item1Desc': '靠工程师写脚本、搭合成管线生成训练环境。覆盖范围受限于团队规模和领域知识——合成管线再强，也覆盖不了各行各业的真实长尾任务。',
+          'problem.item2Title': '向数据公司采购',
+          'problem.item2Desc': '按需求定制、按项目付费。数据公司再大，也不知道每个行业、每家公司、每款小众软件里真正值得训练的任务是什么。采购周期长、成本高、质量不可控。',
+          'problem.coreLabel': '根本矛盾',
+          'problem.coreText': '用有限的劳动力去追无限的任务分布——这是根本矛盾。<br><br>只要环境的生产方式还是「少数人替所有人决定什么值得训练」，Agent 的能力边界就永远被锁在那少数人的视野里。',
+          // ugc
+          'ugc.label': '核心理念',
+          'ugc.title': '为什么可以像抖音',
+          'ugc.desc': '抖音不生产内容，内容量却超过任何电视台。环境也可以这样。',
+          'ugc.card1Title': '每个人都会拍',
+          'ugc.card1Desc': '手机摄像头降低了创作门槛。每个人都知道自己生活里什么有趣，拿起手机就能记录、就能贡献内容。',
+          'ugc.card2Title': '每个人都能贡献环境',
+          'ugc.card2Desc': '会计知道对账的坑、律师知道合同审查的关键条款、SRE 知道线上事故的排查路径。他们不需要懂 RL、不需要写验证器，只需要知道：这个任务，Agent 应该学会。',
+          'ugc.peopleTitle': '谁在定义 Agent 能做什么？',
+          'ugc.tag1': '会计师',
+          'ugc.tag2': '律师',
+          'ugc.tag3': '医生',
+          'ugc.tag4': '程序员',
+          'ugc.tag5': '设计师',
+          'ugc.tag6': '老师',
+          'ugc.tag7': 'SRE',
+          'ugc.tag8': '客服',
+          'ugc.tag9': '产品经理',
+          'ugc.tag10': '研究员',
+          'ugc.tag11': '手艺人',
+          'ugc.tag12': '小店主',
+          'ugc.tag13': '运营',
+          'ugc.tag14': '销售',
+          'ugc.tagMore': '……',
+          // platform
+          'platform.label': '平台能力',
+          'platform.title': '平台会做什么',
+          'platform.desc': '这些本该由模型公司自己做的事，我们认为应该是平台级基础设施，而不是每家公司重复造轮子。',
+          'platform.step1Title': '自动验证器生成',
+          'platform.step1Desc': '上传任务并描述「什么算完成」，平台按任务类型自动生成验证器。贡献者只需确认或微调，不需要从零写代码。',
+          'platform.step1Tag1': '代码任务 → 参考实现生成测试',
+          'platform.step1Tag2': '规则类 → 标准转可执行检查',
+          'platform.step1Tag3': '文档任务 → 期望输出合成 rubric',
+          'platform.step1Tag4': '开放式 → 多参考解分组 rubric',
+          'platform.step2Title': '反作弊审计',
+          'platform.step2Desc': '环境公开后模型会想尽办法作弊，这是一场军备竞赛。平台上线的每个环境先跑一个「Hack Agent」自动探测漏洞，发现就修，修不了就下架；训练中持续审计轨迹。',
+          'platform.step2Tag1': '答案泄漏检测',
+          'platform.step2Tag2': '无关动作绕过验证',
+          'platform.step2Tag3': '伪正确结果构造',
+          'platform.step2Tag4': '训练中轨迹审计',
+          'platform.step2Tag5': '作弊奖励置零',
+          'platform.step3Title': '评分即服务（Grader as a Service）',
+          'platform.step3Desc': '二元的通过/失败不够。提供 GRS 与 GAR 两种评分模式：离线合成任务专属 rubric，以及在线分组比较与优势再分配。模型公司无需自己实现，调用 API 即可。',
+          'platform.step3Tag1': 'GRS — 离线 rubric 评分',
+          'platform.step3Tag2': 'GAR — 在线分组比较',
+          'platform.step3Tag3': '优势再分配',
+          'platform.step3Tag4': '统一 API 接入',
+          'platform.step4Title': '隔离与标准化',
+          'platform.step4Desc': '每个环境运行在自己的容器里，统一 Gym 接口，可重置、可复现、可版本化。网络隔离、文件隔离、资源配额都是默认配置。',
+          'platform.step4Tag1': '容器化隔离',
+          'platform.step4Tag2': '统一 Gym 接口',
+          'platform.step4Tag3': '可重置 / 可复现',
+          'platform.step4Tag4': '版本管理',
+          'platform.step4Tag5': '资源配额',
+          'platform.footerNote': '<strong>贡献者只需要做一件事：</strong>描述日常中「理所当然」的工作。平台负责其余部分——验证器、反作弊、评分器、隔离、标准化。',
+          // mcp
+          'mcp.label': '更轻的贡献方式',
+          'mcp.desc': '把环境采集器装进你每天在用的 Agent 产品里。你什么都没多做，只是正常使用 Agent，就可能贡献了一个带验证信号的真实长尾环境。',
+          'mcp.p1': '只需在 Codex、Cursor、Claude Code、MiMo Code 等任一 Agent 产品的配置里<strong>加一行 MCP 配置</strong>，然后照常工作。',
+          'mcp.p2': 'MCP 在后台静静监听、不打断，只在发现<strong>「高价值片段」</strong>时标记——比如你和 Agent 来回很多次、你纠正它的错误、你最后说「好了就这样」。',
+          'mcp.p3': '它把这段工作流<strong>本地打包成环境草稿</strong>（任务是什么、初始状态、Agent 做了什么动作、你给了什么反馈、最后什么算完成），然后做本地匿名化。',
+          'mcp.p4': '公司名、项目名、人名、邮箱、API key、真实财务数字<strong>全部替换为占位符</strong>，结构保留、敏感值替换。',
+          'mcp.p5': '匿名化后给你预览——你点「确认贡献」才上传；选「忽略」就在本地消失。',
+          'mcp.codeComment': '// 在你的 Agent 配置中添加一行',
+          'mcp.previewTitle': '发现一个值得贡献的环境',
+          'mcp.previewTime': '刚刚',
+          'mcp.previewFieldTask': '任务',
+          'mcp.previewTaskVal': '月度财务报表对账',
+          'mcp.previewFieldDomain': '领域',
+          'mcp.previewDomainVal': '财务 / 会计',
+          'mcp.previewFieldSteps': '动作步骤',
+          'mcp.previewStepsVal': '12 步',
+          'mcp.previewFieldTools': '工具调用',
+          'mcp.previewToolsVal': '5 次',
+          'mcp.previewFieldCorrections': '用户纠正',
+          'mcp.previewCorrectionsVal': '3 次',
+          'mcp.previewFieldVerifier': '验证器类型',
+          'mcp.previewVerifierVal': '规则类检查',
+          'mcp.previewBtnPreview': '预览完整环境',
+          'mcp.previewBtnIgnore': '忽略',
+          'mcp.previewBtnConfirm': '确认贡献',
+          'mcp.privacy1': '每次都询问',
+          'mcp.privacy2': '只对高价值片段提示',
+          'mcp.privacy3': '自动上传但可撤回',
+          'mcp.privacy4': '仅本地',
+          'mcp.flowTitle': '从一次日常工作，到一个上架的环境',
+          'mcp.flow1Title': '正常使用 Agent',
+          'mcp.flow1Desc': 'MCP 后台监听，不打断工作流。只有在发现多轮交互、纠错等「高价值信号」时才介入。',
+          'mcp.flow2Title': '本地匿名化',
+          'mcp.flow2Desc': '敏感信息全部在本地替换为占位符——公司名、项目名、人名、邮箱、API key、真实数字全部脱敏。结构保留，敏感值不留。',
+          'mcp.flow3Title': '预览确认',
+          'mcp.flow3Desc': '你看到完整的匿名化环境草稿，决定是否贡献。不点「确认」，数据永远不会离开你的设备。',
+          'mcp.flow4Title': '平台处理',
+          'mcp.flow4Desc': '上传后平台重建为标准可交互环境 → 自动生成验证器 → 跑 Hack Agent 审计 → 接入评分器 → 上架。',
+          // store
+          'store.label': '环境市场',
+          'store.desc': 'GitHub 式的浏览与协作，App Store 式的评分与消费。发现、使用、贡献真实世界的训练环境。',
+          'store.filterAll': '全部',
+          'store.filterFinance': '财务',
+          'store.filterLegal': '法律',
+          'store.filterDevops': '运维',
+          'store.filterEdu': '教育',
+          'store.filterSupport': '客服',
+          'store.filterCode': '代码',
+          'store.free': '免费',
+          'store.env1Title': '财务报表三表对账与差异报告',
+          'store.env1Desc': '给定资产负债表、利润表、现金流量表，验证三表之间钩稽关系是否成立，识别差异项并生成结构化对账报告。',
+          'store.env2Title': '合同审查关键条款风险识别',
+          'store.env2Desc': '审查商业合同文本，识别 20 类高风险条款（违约责任、管辖约定、知识产权、保密期限等），输出风险等级与修改建议。',
+          'store.env3Title': '线上服务故障排查路径复现',
+          'store.env3Desc': '在模拟的微服务架构中注入故障，要求 Agent 按照标准 SOP 定位根因并修复，验证排查路径的完整性与恢复结果。',
+          'store.env4Title': '初中数学易错概念诊断与讲解',
+          'store.env4Desc': '给定学生的错误解题过程，诊断背后的概念误解点，并用恰当的类比解释清楚，再给出两道同类型变式题验证理解。',
+          'store.env5Title': '电商售后问题真正解决判定',
+          'store.env5Desc': '多轮客服对话后，判定用户的实际问题是否得到根本性解决（而非仅流程性回复），区分「表面解决」与「实际满意」。',
+          'store.env6Title': '遗留系统重构与回归测试设计',
+          'store.env6Desc': '给定一份缺乏测试的遗留代码库，要求重构指定模块并补充完整的回归测试，验证重构后功能等价且测试覆盖率达标。',
+          // longtail
+          'longtail.label': '长尾价值',
+          'longtail.title': '为什么每个人都要参与',
+          'longtail.desc': '模型公司能雇的领域专家有限，但世界有各行各业的从业者、每家公司的内部流程、每款小众软件的用户、每个地区的本地化任务。',
+          'longtail.common': '通用任务',
+          'longtail.tail': '长尾任务',
+          'longtail.quote': '一个会计贡献的财务报表对账环境，可能比模型公司合成的一百个通用财务任务更有价值。',
+          'longtail.cite': '—— 这就是 UGC 环境的长尾力量',
+          // incentive
+          'incentive.label': '激励设计',
+          'incentive.title': '贡献者能得到什么',
+          'incentive.desc': '像内容平台的创作者分成——你贡献环境，平台分发给需要的人，你获得收益。而且高质量环境的价值不随时间快速衰减。',
+          'incentive.card1Title': '收益分成',
+          'incentive.card1Desc': '当模型公司使用你贡献的环境训练模型时，平台记录使用量。模型公司支付的 token 按比例分配给贡献者，环境越有用、被消费越多，收益越多。',
+          'incentive.card2Title': '声望积分',
+          'incentive.card2Desc': '高质量环境获得社区评分与声望积分，提升你在平台的影响力。高声望贡献者可获得早期环境评审权、新功能内测资格等权益。',
+          'incentive.card3Title': '访问权回馈',
+          'incentive.card3Desc': '贡献环境可以换取其他环境的访问权，或者优先获得新模型的测试资格。贡献越多，能使用的资源越多，形成正向循环。',
+          'incentive.note1Title': '比视频更有累积性',
+          'incentive.note1Desc': '内容平台的视频会随时间快速衰减流量，但高质量环境可以被反复使用、迭代、组合。一个经过验证的好环境，可能随着更多模型消费而持续增值。',
+          'incentive.note2Title': '每个用户都是环境采集器',
+          'incentive.note2Desc': '通过 MCP，一百万用户就是一百万个环境来源。你正常使用 Agent 的每一次纠错、每一次反复调试，都可能成为别人训练模型的宝贵环境。',
+          // cta
+          'cta.label': '加入我们',
+          'cta.title': '我们召唤每一个知道<br>「什么值得训练」的人',
+          'cta.desc': '会计、律师、医生、程序员、设计师、老师、SRE、客服、产品经理、研究员……<br>你每天做的「理所当然」的事，正是 Agent 最需要学的。',
+          'cta.placeholder': '输入你的邮箱',
+          'cta.button': '加入等待列表',
+          'cta.subtext': 'MCEnvstore 将开源并上线，正在寻找第一批贡献者与合作伙伴',
+          'cta.partnersLabel': '第一批合作伙伴正在加入',
+          'cta.more': '+ 更多',
+          // slogan
+          'slogan.label': '理念',
+          'slogan.title': 'Agent 的未来，不应该只由<br><span class="gradient-text">少数几家模型公司</span>定义。<br>它应该由每一个知道<br><span class="gradient-text">「什么值得训练」</span>的人共同定义。',
+          'slogan.zh': '我们不想做另一个数据标注平台——标注是低维的（这个答案对不对），环境是高维的（这个世界怎么运作）。',
+          'slogan.sub': '我们要建一个每个知道「什么值得训练」的人都能贡献的地方。',
+          // footer
+          'footer.tagline': 'Agent 训练环境平台。<br>GitHub + App Store + 抖音的结合体。<br>让每个知道什么值得训练的人都能贡献。',
+          'footer.product': '产品',
+          'footer.platform': '平台能力',
+          'footer.mcp': 'MCP 采集器',
+          'footer.store': '环境市场',
+          'footer.incentive': '激励计划',
+          'footer.resources': '资源',
+          'footer.docs': '文档',
+          'footer.api': 'API 参考',
+          'footer.opensource': '开源仓库',
+          'footer.contributing': '贡献指南',
+          'footer.about': '关于',
+          'footer.team': '团队',
+          'footer.blog': '博客',
+          'footer.contact': '联系我们',
+          'footer.privacy': '隐私政策',
+          'footer.built': '为 Agent 训练的未来而建。'
+        }
+      }
+    };
+
+    // Expose on window so inline handlers (e.g. the CTA form's onsubmit)
+    // can read `window.I18N.current`. A top-level `const` is NOT a property
+    // of `window`, so without this the inline handler throws TypeError and
+    // silently fails after event.preventDefault().
+    window.I18N = I18N;
+
+    // ========== I18N Apply Function ==========
+    function applyLanguage(lang) {
+      const dict = I18N.translations[lang];
+      if (!dict) return;
+
+      I18N.current = lang;
+
+      // Update html lang attribute
+      document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+
+      // Update title
+      document.title = 'MCEnvstore — Agent Training Environment Platform';
+
+      // All elements with data-i18n
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key] !== undefined) {
+          el.innerHTML = dict[key];
+        }
+      });
+
+      // All elements with data-i18n-placeholder
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (dict[key] !== undefined) {
+          el.placeholder = dict[key];
+        }
+      });
+
+      // Elements with data-i18n-label (for CSS ::before content via data-label)
+      document.querySelectorAll('[data-i18n-label]').forEach(el => {
+        const key = el.getAttribute('data-i18n-label');
+        if (dict[key] !== undefined) {
+          el.setAttribute('data-label', dict[key]);
+        }
+      });
+
+      // Update language toggle active state
+      document.querySelectorAll('.lang-option').forEach(opt => {
+        if (opt.dataset.lang === lang) {
+          opt.classList.add('active');
+        } else {
+          opt.classList.remove('active');
+        }
+      });
+
+      // Save to localStorage
+      try {
+        localStorage.setItem('mcenvstore_lang', lang);
+      } catch (e) { /* ignore */ }
+    }
+
+    // ========== Initialize Language ==========
+    (function initLang() {
+      let savedLang = 'en';
+      try {
+        savedLang = localStorage.getItem('mcenvstore_lang') || 'en';
+      } catch (e) { /* ignore */ }
+
+      // Apply immediately before page fully renders
+      if (savedLang === 'zh') {
+        applyLanguage('zh');
+      }
+    })();
+
+    // ========== Language Toggle ==========
+    document.addEventListener('DOMContentLoaded', () => {
+      const langToggle = document.getElementById('langToggle');
+      if (langToggle) {
+        langToggle.addEventListener('click', (e) => {
+          const option = e.target.closest('.lang-option');
+          if (!option) return;
+          const lang = option.dataset.lang;
+          if (lang && lang !== I18N.current) {
+            applyLanguage(lang);
+          }
+        });
+      }
+    });
+  </script>
+
+  <script>
+    // ========== Scroll Reveal Animation ==========
+    document.addEventListener('DOMContentLoaded', () => {
+      const revealElements = document.querySelectorAll('.reveal');
+
+      const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            revealObserver.unobserve(entry.target);
+          }
+        });
+      }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+      });
+
+      revealElements.forEach(el => revealObserver.observe(el));
+
+      // ========== Long Tail Bars Generation ==========
+      const barsContainer = document.getElementById('longtail-bars');
+      if (barsContainer) {
+        const numBars = 50;
+        const tailStart = 12;
+
+        for (let i = 0; i < numBars; i++) {
+          const bar = document.createElement('div');
+          bar.className = 'longtail-bar';
+
+          let heightPercent;
+          if (i < 5) {
+            heightPercent = 95 - i * 3;
+          } else if (i < tailStart) {
+            heightPercent = 80 - (i - 5) * 8;
+          } else {
+            const tailIndex = i - tailStart;
+            heightPercent = 25 * Math.exp(-tailIndex * 0.06);
+          }
+
+          bar.style.height = Math.max(heightPercent, 4) + '%';
+
+          if (i >= tailStart) {
+            bar.classList.add('tail');
+          }
+
+          barsContainer.appendChild(bar);
+        }
+      }
+
+      // ========== Privacy Settings Interaction ==========
+      const privacyItems = document.querySelectorAll('.privacy-item');
+      privacyItems.forEach(item => {
+        item.addEventListener('click', () => {
+          privacyItems.forEach(i => i.classList.remove('active'));
+          item.classList.add('active');
+        });
+      });
+
+      // ========== Store Filters (actually filter the cards) ==========
+      const filters = document.querySelectorAll('.store-filter');
+      const envCards = document.querySelectorAll('.env-card');
+      filters.forEach(filter => {
+        filter.addEventListener('click', () => {
+          filters.forEach(f => f.classList.remove('active'));
+          filter.classList.add('active');
+
+          // Match on the card's category chip text, which is itself i18n-driven,
+          // so this keeps working after a language switch.
+          const want = filter.textContent.trim();
+          const isAll = filter.dataset.i18n === 'store.filterAll';
+          let shown = 0;
+          envCards.forEach(card => {
+            const cat = card.querySelector('.env-category');
+            const catText = cat ? cat.textContent.trim() : '';
+            const hit = isAll || catText === want;
+            card.style.display = hit ? '' : 'none';
+            if (hit) shown++;
+          });
+          document.dispatchEvent(new CustomEvent('store:filtered', {
+            detail: { filter: want, shown: shown, total: envCards.length }
+          }));
+        });
+      });
+
+      // ========== Navbar scroll effect ==========
+      const nav = document.querySelector('nav');
+      let lastScroll = 0;
+
+      window.addEventListener('scroll', () => {
+        const currentScroll = window.pageYOffset;
+        if (currentScroll > 100) {
+          nav.style.background = 'rgba(10, 10, 10, 0.85)';
+        } else {
+          nav.style.background = 'rgba(10, 10, 10, 0.7)';
+        }
+        lastScroll = currentScroll;
+      });
+
+      // ========== Smooth scroll for nav links ==========
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute('href'));
+          if (target) {
+            const offsetTop = target.offsetTop - 64;
+            window.scrollTo({
+              top: offsetTop,
+              behavior: 'smooth'
+            });
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

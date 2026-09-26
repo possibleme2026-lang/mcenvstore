@@ -1,0 +1,75 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one deploy at a time; do not cancel an in-flight production deploy.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: verify (static checks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check bilingual README structure
+        run: python tools/check_readme_i18n.py
+
+      - name: Check no third-party runtime dependency
+        run: |
+          # The page must stay self-contained: no remote CSS/JS/font origins.
+          if grep -nE '(src|href)="https?://' index.html; then
+            echo "::error::index.html references a remote origin; keep the page self-contained."
+            exit 1
+          fi
+          echo "no remote origins referenced"
+
+      - name: Check every local asset referenced by index.html exists
+        run: |
+          python - <<'PY'
+          import re, sys
+          from pathlib import Path
+          html = Path("index.html").read_text(encoding="utf-8")
+          # local url(...) inside @font-face, plus any relative src/href
+          refs = set(re.findall(r"url\(['\"]?([^'\")]+)['\"]?\)", html))
+          refs |= set(re.findall(r'(?:src|href)="([^"#:]+)"', html))
+          missing = [r for r in sorted(refs) if not r.startswith(("http", "//", "data:"))
+                     and not Path(r).exists()]
+          for r in missing:
+              print(f"::error::missing local asset: {r}")
+          print(f"checked {len(refs)} refs, {len(missing)} missing")
+          sys.exit(1 if missing else 0)
+          PY
+
+  deploy:
+    name: deploy
+    needs: verify
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
